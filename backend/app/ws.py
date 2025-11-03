@@ -626,8 +626,14 @@ class GameState:
 
     def compute_actions_for(self, ws: WebSocket) -> List[dict]:
         actions: List[dict] = []
-        if not self.reaction_active or not self.last_discard:
+        if not self.reaction_active:
             return actions
+
+        # If there's no last_discard, this is a self-draw reaction window.
+        # Use precomputed reaction_actions (e.g. self-win) if present.
+        if not self.last_discard:
+            return list(self.reaction_actions.get(ws, []))
+
         from_ws, tile = self.last_discard
         if ws is from_ws:
             return actions

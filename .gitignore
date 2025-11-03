@@ -1,0 +1,16 @@
+# Node
+node_modules/
+*.log
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / Misc
+.DS_Store
+Thumbs.db
+.env
+

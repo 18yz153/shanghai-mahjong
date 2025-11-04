@@ -1,11 +1,26 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List
 import json
+import os
 import traceback
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from .ws import room_manager
+
+# Get allowed origins from environment variable or use default development origins
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    if origin.strip()
+]
+
+# API Models
+class RoomInfo(BaseModel):
+    room_id: str
+    player_count: int
+    game_in_progress: bool
 
 
 async def handle_ws(websocket: WebSocket) -> None:
@@ -145,24 +160,70 @@ async def handle_ws(websocket: WebSocket) -> None:
         traceback.print_exc()
         room_manager.disconnect(websocket)
 
-app = FastAPI(title="Shanghai Mahjong Backend")
+app = FastAPI(title="Shanghai Mahjong Backend", version="1.0.0")
 
-# Allow Vite dev server by default
+# Get allowed origins from environment variable or use default development origins
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in (
+        import os
+    ).getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health() -> dict:
-    return {"status": "ok", "time": datetime.utcnow().isoformat()}
+    """健康检查接口"""
+    return {
+        "status": "ok",
+        "time": datetime.utcnow().isoformat(),
+        "version": app.version
+    }
+
+@app.get("/api/rooms")
+async def list_rooms() -> List[RoomInfo]:
+    """获取所有房间信息"""
+    rooms: List[RoomInfo] = []
+    for room_id in room_manager.rooms:
+        game = room_manager.games.get(room_id)
+        rooms.append(RoomInfo(
+            room_id=room_id,
+            player_count=len(room_manager.rooms[room_id]),
+            game_in_progress=bool(game and game.started)
+        ))
+    return rooms
+
+@app.get("/api/rooms/{room_id}")
+async def get_room_info(room_id: str) -> Dict[str, Any]:
+    """获取特定房间信息"""
+    if room_id not in room_manager.rooms:
+        return Response(status_code=404, content="Room not found")
+        
+    game = room_manager.games.get(room_id)
+    players = [
+        {"name": room_manager.clients[ws].name if ws in room_manager.clients else "Unknown"}
+        for ws in room_manager.rooms[room_id]
+    ]
+    
+    return {
+        "room_id": room_id,
+        "player_count": len(room_manager.rooms[room_id]),
+        "players": players,
+        "game_in_progress": bool(game and game.started),
+        "game_info": {
+            "wall_count": game.wall_count if game else None,
+            "turn_index": game.turn_index if game and game.started else None,
+            "score_multiplier": game.score_multiplier if game else 1,
+        } if game else None
+    }
 
 
 @app.websocket("/ws")

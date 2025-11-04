@@ -12,7 +12,8 @@ export default function App() {
   const [game, setGame] = useState<any | null>(null)
   const [nowTs, setNowTs] = useState<number>(Date.now())
 
-  const client = useMemo(() => new WSClient({ url: 'ws://localhost:8000/ws' }), [])
+  const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+  const client = useMemo(() => new WSClient({ url: wsUrl }), [])
 
   useEffect(() => {
     client.onStateChange = setState

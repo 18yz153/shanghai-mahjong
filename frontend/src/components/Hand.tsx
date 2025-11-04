@@ -1,29 +1,57 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Tile } from './ui'
 
 export default function Hand({ game, client, joined, isYourTurn, tingPending, tingDiscardables }: any) {
-  const currentPlayerName = game?.players?.[game?.turn_index]?.name
+  const hand = game?.yourHand ?? []
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const hoverOffset = 16
+  const extraMargin = 4
+  const containerWidth = windowWidth * 0.9
+  const cardWidth = Math.min(80, containerWidth / 14 - 8)
+  const cardHeight = cardWidth * 1.6
+  const handHeight = cardHeight + hoverOffset + extraMargin
+
   return (
-    <div className="px-4 pb-4">
-      <div className="mb-2">
-        {/* 状态区：优先显示反应窗口，其次突出显示请出牌 */}
-        {game?.reactionActive ? (
-          <div className="text-yellow-400 font-medium">等待玩家反应...</div>
-        ) : isYourTurn ? (
-          <div className="text-amber-400 font-bold text-lg">请出牌</div>
-        ) : (
-          <div className="text-sm text-slate-400">等待 {currentPlayerName ?? '对家'} 出牌</div>
-        )}
-      </div>
-      <div className="flex gap-2 justify-center min-h-[120px] bg-slate-800/30 rounded-lg p-4">
-        {(game?.yourHand ?? []).map((t: string, i: number) => {
+    <div
+      className="fixed bottom-0 left-0 w-full flex justify-center z-50 overflow-visible"
+      style={{
+        height: handHeight,
+        paddingLeft: 16,
+        paddingRight: 16,
+        pointerEvents: 'auto'
+      }}
+    >
+      <div className="flex gap-2 justify-center items-end overflow-x-auto" style={{ paddingBottom: hoverOffset + extraMargin }}>
+        {hand.map((t: string, i: number) => {
           const enabled = isYourTurn && (!tingPending || tingDiscardables.includes(t))
           const canTing = tingPending ? tingDiscardables.includes(t) : true
-          const cls = enabled ? 'hover:translate-y-[-8px] transition-transform' : ''
-          const tileCls = enabled ? (canTing ? 'bg-emerald-700 border-slate-600 hover:bg-emerald-600' : 'bg-amber-700 border-slate-600 hover:bg-amber-600') : 'bg-slate-700 border-slate-600 opacity-70'
+          const cls = enabled ? 'hover:translate-y-[-16px] transition-transform' : ''
+          const tileCls = enabled
+            ? canTing
+              ? 'bg-emerald-700 border-slate-600 hover:bg-emerald-600'
+              : 'bg-amber-700 border-slate-600 hover:bg-amber-600'
+            : 'bg-slate-700 border-slate-600 opacity-70'
+
           return (
-            <button key={i} onClick={() => enabled && client.discard(joined.roomId, t)} disabled={!enabled} className={cls}>
-              <Tile tile={t} className={`w-10 h-[5rem] text-base ${tileCls}`} />
+            <button
+              key={i}
+              onClick={() => enabled && client.discard(joined.roomId, t)}
+              disabled={!enabled}
+              className={cls}
+            >
+              <Tile
+                tile={t}
+                className={tileCls}
+                style={{ width: cardWidth, height: cardHeight }}
+              />
             </button>
           )
         })}

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import Counter
 
 from dataclasses import dataclass, field
 from typing import Dict, Set, List, Optional, Tuple, Deque
@@ -95,7 +96,7 @@ SUITS = ['B', 'C', 'D']  # B=bamboo, C=characters, D=dots
 NUMBERS = list(range(1, 10))
 WINDS = ['WE', 'WS', 'WW', 'WN']
 DRAGONS = ['DR', 'DG', 'DW']
-SEASONS = ['F1', 'F2', 'F3', 'F4']  # 春夏秋冬 (1..4)
+SEASONS = ['F1', 'F2', 'F3', 'F4','F5', 'F6', 'F7', 'F8']  # 春夏秋冬 菊兰梅竹(1..4)
 
 
 def build_wall() -> List[str]:
@@ -298,71 +299,98 @@ def is_all_pongs(tiles14: List[str], exposed_melds: List[dict] = None) -> bool:
             
     return pair_found
 
-def can_win_hand(tiles14: List[str], exposed_melds: List[dict] = None) -> bool:
-    # Ignore flowers/seasons in win check
-    core = [t for t in tiles14 if t not in SEASONS]
+def can_win_hand(hand_tiles: List[str], exposed_melds: List[Dict] = None) -> bool:
+    """
+    判断手牌是否可以胡牌
+    hand_tiles: 手牌（未明牌）
+    exposed_melds: 已明牌（碰/杠/吃）
+    """
     exposed = exposed_melds or []
-    
-    # Check seven pairs first
-    if is_seven_pairs(core, exposed):
-        return True
-    
-    # Convert exposed melds into actual tiles
-    meld_tiles = []
-    for meld in exposed:
-        if meld['type'] == 'pong':
-            meld_tiles.extend([meld['tile']] * 3)
-        elif meld['type'] == 'kong':
-            meld_tiles.extend([meld['tile']] * 4)
-        elif meld['type'] == 'chi':
-            meld_tiles.extend(meld['tiles'])
-    
-    # Combine hand tiles with meld tiles
-    all_tiles = core + meld_tiles
-    
-    # Should have exactly 14 tiles total
-    if len(all_tiles) != 14:
+
+    # 已明牌固定，不拆分
+    fixed_tiles_count = sum(
+        len(meld['tiles']) if meld['type']=='chi' else 3 if meld['type']=='pong' else 4
+        for meld in exposed
+    )
+
+    total_tiles = len(hand_tiles) + fixed_tiles_count
+    if total_tiles != 14:
         return False
-    
-    counts = count_tiles(all_tiles)
-    
-    # Try each possible pair
-    for tile, c in list(counts.items()):
+
+    # 仅对手牌尝试组合
+    return can_form_melds_only(hand_tiles)
+
+def can_form_melds_only(tiles: List[str]) -> bool:
+    """
+    尝试手牌拆成 4 副 meld + 1 对将
+    """
+    if not tiles:
+        return True
+
+    counts = Counter(tiles)
+    for tile, c in counts.items():
         if c >= 2:
-            counts[tile] -= 2
-            # Check if remaining tiles can form valid melds
-            if can_form_melds(counts):
-                counts[tile] += 2
+            # 尝试将
+            remaining = tiles.copy()
+            remaining.remove(tile)
+            remaining.remove(tile)
+            if can_form_melds_recursive(remaining):
                 return True
-            counts[tile] += 2
     return False
 
-def winning_tiles_for(hand13: List[str], exposed_melds: List[dict] = None) -> List[str]:
-    wins: List[str] = []
-    core = [t for t in hand13 if t not in SEASONS]
-    exposed = exposed_melds or []
-    
-    # Convert exposed melds into actual tiles
-    meld_tiles = []
-    for meld in exposed:
-        if meld['type'] == 'pong':
-            meld_tiles.extend([meld['tile']] * 3)
-        elif meld['type'] == 'kong':
-            meld_tiles.extend([meld['tile']] * 4)
-        elif meld['type'] == 'chi':
-            meld_tiles.extend(meld['tiles'])
-    
-    # Verify we have the right number of tiles
-    all_tiles = core + meld_tiles
-    if len(all_tiles) != 13:
-        return wins
-    
-    # Try each possible winning tile
-    for tile in ALL_UNIQUE_TILES:
-        if can_win_hand(core + [tile], exposed):
+def can_form_melds_recursive(tiles: List[str]) -> bool:
+    """
+    递归拆手牌成刻子或顺子
+    """
+    if not tiles:
+        return True
+    tiles.sort()
+    counts = Counter(tiles)
+    first = tiles[0]
+
+    # 尝试刻子
+    if counts[first] >= 3:
+        remaining = tiles.copy()
+        for _ in range(3):
+            remaining.remove(first)
+        if can_form_melds_recursive(remaining):
+            return True
+
+    # 尝试顺子（只针对万/筒/条）
+    suit = first[-1]
+    if suit in 'mps':
+        try:
+            n1 = str(int(first[0]) + 1) + suit
+            n2 = str(int(first[0]) + 2) + suit
+            if n1 in counts and n2 in counts:
+                remaining = tiles.copy()
+                remaining.remove(first)
+                remaining.remove(n1)
+                remaining.remove(n2)
+                if can_form_melds_recursive(remaining):
+                    return True
+        except:
+            pass
+
+    return False
+
+# 返回可胡的牌
+def winning_tiles_for(hand13: List[str], exposed_melds: List[Dict] = None, all_tiles: List[str] = None) -> List[str]:
+    """
+    hand13: 手牌 13 张
+    exposed_melds: 已明牌
+    all_tiles: 可尝试的牌池，默认为全部标准牌
+    """
+    if all_tiles is None:
+        all_tiles = [
+            f'{i}{suit}' for suit in 'mps' for i in range(1, 10)
+        ] + ['east', 'south', 'west', 'north', 'red', 'green', 'white']
+
+    wins = []
+    for tile in all_tiles:
+        if can_win_hand(hand13 + [tile], exposed_melds):
             wins.append(tile)
     return wins
-
 
 @dataclass
 class GameState:

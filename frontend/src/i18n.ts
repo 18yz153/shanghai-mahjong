@@ -46,3 +46,39 @@ export function formatTileZh(tile: string): string {
   }
 }
 
+export function tileToSvg(tile: string): string {
+  // 处理数字牌
+  const match = tile.match(/^([BCD])(\d)$/)
+  if (match) {
+    const suit = match[1]
+    const num = match[2]
+    let suffix = ''
+    switch (suit) {
+      case 'B': suffix = 's'; break // 条 -> s
+      case 'C': suffix = 'm'; break // 万 -> m
+      case 'D': suffix = 'p'; break // 筒 -> p
+    }
+    return `/assets/svg/${num}${suffix}.svg`
+  }
+
+  // 风 / 龙 / 节气
+  switch (tile) {
+    case 'WE': return '/assets/svg/1z.svg'
+    case 'WS': return '/assets/svg/2z.svg'
+    case 'WW': return '/assets/svg/3z.svg'
+    case 'WN': return '/assets/svg/4z.svg'
+    case 'DR': return '/assets/svg/7z.svg'
+    case 'DG': return '/assets/svg/6z.svg'
+    case 'DW': return '/assets/svg/5z.svg'
+    case 'F1': return '/assets/svg/chun.svg'
+    case 'F2': return '/assets/svg/xia.svg'
+    case 'F3': return '/assets/svg/qiu.svg'
+    case 'F4': return '/assets/svg/dong.svg'
+    case 'F5': return '/assets/svg/ju.svg'
+    case 'F6': return '/assets/svg/lan.svg'
+    case 'F7': return '/assets/svg/mei.svg'
+    case 'F8': return '/assets/svg/zu.svg'
+    default: return '' // 找不到就返回空
+  }
+}
+

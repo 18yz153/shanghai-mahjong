@@ -79,10 +79,52 @@ export default function App() {
 
       {joined && (
         <div className="mt-2">
-          <div className="mb-4 flex items-baseline gap-4">
-            <div className="text-lg font-semibold">Room: {joined.roomId}</div>
-            <div className="text-sm text-slate-300">You are: {joined.name}</div>
-            <div className="text-sm text-slate-400">Wall: {game?.wallCount ?? 0}</div>
+          <div className="mb-4 space-y-2">
+            <div className="flex items-baseline gap-4">
+              <div className="text-lg font-semibold">Room: {joined.roomId}</div>
+              <div className="text-sm text-slate-300">You are: {joined.name}</div>
+              <div className="text-sm text-slate-400">Wall: {game?.wallCount ?? 0}</div>
+            </div>
+            
+            {/* 房间玩家状态栏 */}
+            <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-sm font-medium">房间玩家 ({game?.players?.length ?? 0}/4):</div>
+                {game?.started && (
+                  <div className="text-sm">
+                    {game?.reactionActive ? (
+                      <span className="text-yellow-400">等待玩家反应...</span>
+                    ) : (
+                      <span>轮到: <span className="text-amber-400 font-medium">
+                        {game?.players?.[game?.turn_index]?.name ?? '未知'}
+                      </span></span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {game?.players?.map((player: any, index: number) => (
+                  <div key={index} className={`flex items-center gap-2 p-1 rounded ${player.turn && game?.started ? 'bg-amber-900/30 border border-amber-700/50' : ''}`}>
+                    <div className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-400' : 'bg-red-400'}`} />
+                    <span className={`text-sm ${player.you ? 'text-indigo-400 font-medium' : player.turn ? 'text-amber-300 font-medium' : 'text-slate-300'}`}>
+                      {player.name}
+                    </span>
+                    {player.ting && <span className="text-[10px] px-1 bg-pink-900/50 text-pink-300 rounded">听</span>}
+                    <span className={`text-xs ${player.score > 0 ? 'text-emerald-400' : player.score < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
+                      {player.score > 0 ? '+' : ''}{player.score ?? 0}
+                    </span>
+                    {player.turn && game?.started && (
+                      <span className="text-[10px] px-1 bg-amber-900/50 text-amber-300 rounded">当前</span>
+                    )}
+                  </div>
+                ))}
+                {(game?.players?.length ?? 0) < 4 && Array.from({ length: 4 - (game?.players?.length ?? 0) }).map((_, i) => (
+                  <div key={`empty-${i}`} className="text-slate-500 text-sm italic">
+                    (等待加入...)
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

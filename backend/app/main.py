@@ -158,7 +158,7 @@ app = FastAPI(title="Shanghai Mahjong Backend", version="1.0.0")
 
 # Get allowed origins from environment variable or use default development origins
 ALLOWED_ORIGINS = [
-    "https://shanghai-mahjong-1.onrender.com"
+    '*'
 ]
 
 app.add_middleware(

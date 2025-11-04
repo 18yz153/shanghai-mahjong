@@ -9,12 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .ws import room_manager
 
-# Get allowed origins from environment variable or use default development origins
-ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-    if origin.strip()
-]
 
 # API Models
 class RoomInfo(BaseModel):
@@ -164,10 +158,7 @@ app = FastAPI(title="Shanghai Mahjong Backend", version="1.0.0")
 
 # Get allowed origins from environment variable or use default development origins
 ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in (
-        import os
-    ).getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    "https://shanghai-mahjong-1.onrender.com"
 ]
 
 app.add_middleware(

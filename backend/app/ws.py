@@ -761,7 +761,7 @@ class GameState:
         Returns base score (before multipliers like concealed hand or self-win).
         """
         # Start with base score 10
-        score = 10
+        score = 0
         
         hand = self.hands.get(ws, [])
         exposed = list(self.exposed_melds.get(ws, []))
@@ -782,7 +782,7 @@ class GameState:
                     score += 2
                 else:
                     score += 1
-        
+        score = 10 if score == 0 else score  # Minimum base score is 10
         # Calculate multiplier based on patterns
         multiplier = 1
         
@@ -841,7 +841,7 @@ class GameState:
             
             # For self-win, base score is doubled and all other players pay
             # Apply both hand multiplier and dice multiplier
-            final_score = base_score * hand_multiplier * 2 * self.score_multiplier  # Include dice multiplier
+            final_score = base_score * hand_multiplier * self.score_multiplier  # Include dice multiplier
             
             # Each other player pays the final score
             for ws in self.player_order:
@@ -872,6 +872,9 @@ class GameState:
             self.scores[from_ws] = self.scores.get(from_ws, 0) - final_score
             
             # End game and prepare for next round
+            print("[END_GAME] scores:", {str(k): v for k,v in self.scores.items()})
+            for i, ws in enumerate(self.player_order):
+                print(f"player {i}: , score={self.scores.get(ws, 'N/A')}")
             self._end_game(winner)
             return "win"
             
@@ -1019,7 +1022,6 @@ class GameState:
         # canTing indicator and list of discardable tiles to enter Ting
         can_ting = False
         ting_discardables: List[str] = []
-        print(self.started and self.player_order and self.player_order[self.turn_index] is recipient and self.expects_discard and not self.ting_flags.get(recipient, False))
         if self.started and self.player_order and self.player_order[self.turn_index] is recipient and self.expects_discard and not self.ting_flags.get(recipient, False):
             hand = list(self.hands.get(recipient, []))
             exposed = list(self.exposed_melds.get(recipient, []))

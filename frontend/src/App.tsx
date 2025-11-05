@@ -5,6 +5,7 @@ import DiscardPile from './components/DiscardPile'
 import Hand from './components/Hand'
 import ActionPanel from './components/ActionPanel'
 import { Seat } from './components/ui'
+import RoomInfo from './components/RoomInfo'
 
 export default function App() {
   const [state, setState] = useState<WSState>('disconnected')
@@ -76,6 +77,19 @@ export default function App() {
 
   return (
     <div className="relative w-full h-full bg-slate-900">
+      <div
+        style={{ position: 'absolute', top: 12, left: 12, zIndex: 60 }}
+        className="w-[260px]"
+      >
+        <RoomInfo
+          joined={{ roomId, name }}
+          game={game}
+          nowTs={nowTs}
+          wsState={game?.readyState}
+          lastPong={game?.lastPong}
+          lastClose={game?.lastClose}
+        />
+      </div>
       {/* 桌面区域 */}
       <div style={{ width: deskWidth, height: boardHeight }} className="relative">
         {/* 上家 */}

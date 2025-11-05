@@ -17,9 +17,9 @@ export default function RoomInfo({
   lastClose?: { code: number; reason: string } | null
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-700 text-sm gap-3">
+    <div className="flex flex-col items-center justify-between bg-slate-800/40 p-2 rounded-lg border border-slate-700 text-sm gap-3">
       {/* 房间与玩家信息 */}
-      <div className="flex items-center flex-wrap gap-4">
+      <div className="flex items-center flex-col gap-4">
         <div className="font-semibold">房间 {joined?.roomId}</div>
         <div className="text-slate-300">你是 {joined?.name}</div>
         <div className="text-slate-400">牌墙 {game?.wallCount ?? 0}</div>

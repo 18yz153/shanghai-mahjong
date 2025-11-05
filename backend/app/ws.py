@@ -959,19 +959,24 @@ class GameState:
         """游戏结束时的清理和设置"""
         # 记录赢家和设置下一局的倍数
         self.last_winner = winner
-        self.started = False
         self.score_multiplier = self.next_game_multiplier
         self.next_game_multiplier = 1
 
-        # 清除当前局的状态
-        self.hands = {}
-        self.discard_piles = {}
-        self.exposed_melds = {}
-        self.ting_flags = {}
-        self.last_drawn = {}
-        self.ting_pending = {}
-        self.dice_values = []
-        
+        # 清除上一局所有状态
+        self.hands = {}                 # 玩家手牌
+        self.discard_piles = {}         # 出牌堆
+        self.exposed_melds = {}         # 明杠/碰/吃牌堆
+        self.ting_flags = {}            # 玩家是否已经听牌
+        self.ting_pending = {}          # 玩家听牌待确认
+        self.last_drawn = {}            # 玩家最后摸的牌
+        self.last_discard = None        # 最后一次出牌
+        self.wall = self.wall or []     # 牌墙，如果有花牌要清空
+        self.flowers = {}               # 如果有花牌，清空花牌信息
+        self.expects_discard = False
+        self.reaction_active = False
+        self.reaction_claims = {}
+        self.reaction_deadline_ts = None
+
         # 设置等待下一局的掷骰子状态
         self.waiting_for_dice = True
         self.dice_roller = winner

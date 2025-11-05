@@ -5,9 +5,9 @@ export default function ActionPanel({ game, client, joined, isYourTurn, you, tin
   return (
     <div className="space-y-2">
       {/* 掷骰子 */}
-      {game?.started && game?.waitingForDice && (
+      {game?.waitingForDice && (
         <div className="space-y-1">
-          {game.diceRoller?.name === joined.name ? (
+          {game.dice_roller?.name === joined.name ? (
             <button onClick={() => client.rollDice(joined.roomId)} className="w-full px-3 py-1 rounded bg-yellow-600 hover:bg-yellow-500">
               掷骰子
             </button>

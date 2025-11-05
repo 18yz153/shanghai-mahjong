@@ -48,7 +48,7 @@ export default function DiscardPile({ game }: { game: any }) {
     const playerFromGame = game?.players?.[idx]
     if (!row) return { name: '(空)', tiles: [], turn: false }
 
-    const score = row.scores ?? 0
+    const score = row.score ?? 0
     const scoreStr = `(${score})`
     const color = score > 0 ? 'text-emerald-400' : score < 0 ? 'text-rose-400' : 'text-slate-300'
 

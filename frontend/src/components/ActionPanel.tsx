@@ -1,7 +1,15 @@
 import React from 'react'
+import {formatTileZh} from '../i18n'
 
 export default function ActionPanel({ game, client, joined, isYourTurn, you, tingPending, tingDiscardables, state, nowTs }: any) {
-  console.log({ isYourTurn, ting: you?.ting, canTing: game?.canTing, tingPending });
+  const actionTypeMap: Record<string, string> = {
+        'pass': '过',
+        'chi': '吃',
+        'peng': '碰',
+        'gang': '杠',
+        'win': '胡',
+        'self-win': '自摸',
+      }
   return (
     <div className="space-y-2">
       {/* 掷骰子 */}
@@ -28,7 +36,7 @@ export default function ActionPanel({ game, client, joined, isYourTurn, you, tin
           <button onClick={() => client.tingCancel(joined.roomId)} className="w-full px-5 py-3 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-50" disabled={state !== 'connected'}>取消听牌</button>
         )}
       </div>
-
+      
       {/* reaction actions (胡/自摸/吃碰 etc.) rendered where appropriate */}
       {game?.reactionActive && game?.yourActions?.length > 0 && (
         <div className="space-y-2">
@@ -36,7 +44,7 @@ export default function ActionPanel({ game, client, joined, isYourTurn, you, tin
           <div className="flex flex-wrap gap-2 items-center">
             {game.yourActions.map((a: any) => (
               <button key={a.id} onClick={() => client.claim(joined.roomId, { id: a.id })} className={`px-5 py-3 rounded text-sm border ${a.type === 'pass' ? 'bg-slate-700 border-slate-600' : a.type === 'win' || a.type === 'self-win' ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-400' : 'bg-rose-700 hover:bg-rose-600 border-rose-500'}`}>
-                {a.type === 'win' ? '胡' : a.type === 'self-win' ? '自摸' : a.type.toUpperCase()} {a.tiles ? `(${a.tiles.join(' ')})` : ''}
+                {actionTypeMap[a.type] || a.type} {a.tiles ? `(${a.tiles.map(formatTileZh).join(' ')})` : ''}
               </button>
             ))}
             {typeof game.reactionDeadlineTs === 'number' && (

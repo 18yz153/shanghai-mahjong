@@ -306,7 +306,8 @@ def can_win_hand(hand_tiles: List[str], exposed_melds: List[Dict] = None) -> boo
     exposed_melds: 已明牌（碰/杠/吃）
     """
     exposed = exposed_melds or []
-
+    if is_seven_pairs(hand_tiles, exposed):
+        raise True 
     # 已明牌固定，不拆分
     fixed_tiles_count = sum(
         len(meld['tiles']) if meld['type']=='chi' else 3 if meld['type']=='pong' else 4
@@ -849,21 +850,7 @@ class GameState:
                     # Winner gets score from each player
                     self.scores[winner] = self.scores.get(winner, 0) + final_score
             
-            # End game and clean up, prepare next game multiplier
-            self.started = False
-            self.score_multiplier = self.next_game_multiplier  # Set up next game's multiplier
-            self.next_game_multiplier = 1  # Reset next game multiplier
-            self.last_winner = winner  # 记录赢家
-            self.clear_reactions()
-            # 清除当前局的状态，但保留分数和赢家信息
-            self.hands = {}
-            self.discard_piles = {}
-            self.exposed_melds = {}
-            self.ting_flags = {}
-            self.last_drawn = {}
-            self.ting_pending = {}
-            self.dice_values = []
-            self.turn_index = 0
+            self._end_game(winner)
             return "self-win"
             
         # Handle regular win (点炮)

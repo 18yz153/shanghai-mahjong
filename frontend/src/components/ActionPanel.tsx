@@ -4,19 +4,17 @@ export default function ActionPanel({ game, client, joined, isYourTurn, you, tin
   console.log({ isYourTurn, ting: you?.ting, canTing: game?.canTing, tingPending });
   return (
     <div className="space-y-2">
-      {game?.started && (
-        <>
-          {/* 骰子控制（掷骰子按钮 / 等待提示） - 实际骰子显示在棋盘中心 */}
-          <div className="space-y-1">
-            {game.waitingForDice ? (
-              game.diceRoller?.name === joined.name ? (
-                <button onClick={() => client.rollDice(joined.roomId)} className="w-full px-5 py-3 rounded bg-yellow-600 hover:bg-yellow-500">掷骰子</button>
-              ) : (
-                <div className="text-slate-400 text-sm">等待 {game.diceRoller?.name} 掷骰子...</div>
-              )
-            ) : null}
-          </div>
-        </>
+      {/* 掷骰子 */}
+      {game?.started && game?.waitingForDice && (
+        <div className="space-y-1">
+          {game.diceRoller?.name === joined.name ? (
+            <button onClick={() => client.rollDice(joined.roomId)} className="w-full px-3 py-1 rounded bg-yellow-600 hover:bg-yellow-500">
+              掷骰子
+            </button>
+          ) : (
+            <div className="text-slate-400 text-sm">等待 {game.diceRoller?.name} 掷骰子...</div>
+          )}
+        </div>
       )}
 
       <div className="space-y-2">

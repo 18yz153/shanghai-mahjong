@@ -318,60 +318,94 @@ def can_win_hand(hand_tiles: List[str], exposed_melds: List[Dict] = None) -> boo
         return False
 
     # 仅对手牌尝试组合
-    return can_form_melds_only(hand_tiles)
+    return check_standard_hand(hand_tiles)
 
-def can_form_melds_only(tiles: List[str]) -> bool:
+def check_standard_hand(tiles: List[str]) -> bool:
     """
-    尝试手牌拆成 4 副 meld + 1 对将
+    检查手牌(tiles)是否能组成 N个面子 + 1对将。
+    例如：14张牌 -> 4面子+1将
+           5张牌 -> 1面子+1将
+           2张牌 -> 0面子+1将 (即一对将)
     """
     if not tiles:
         return True
+    
+    # 牌的数量必须是 3N + 2
+    if len(tiles) % 3 != 2:
+        return False
 
     counts = Counter(tiles)
-    for tile, c in counts.items():
-        if c >= 2:
-            # 尝试将
-            remaining = tiles.copy()
-            remaining.remove(tile)
-            remaining.remove(tile)
-            if can_form_melds_recursive(remaining):
+    
+    # 遍历所有可能的“将” (Pair)
+    for tile, count in counts.items():
+        if count >= 2:
+            # 尝试将 tile 作为“将”
+            remaining_counts = counts.copy()
+            remaining_counts[tile] -= 2
+            
+            # 清理数量为0的键
+            if remaining_counts[tile] == 0:
+                del remaining_counts[tile]
+            
+            # 检查剩下的牌是否能组成 N 个面子
+            if can_form_melds_recursive(remaining_counts):
                 return True
+                
+    # 尝试了所有可能的“将”，都失败了
     return False
 
-def can_form_melds_recursive(tiles: List[str]) -> bool:
+def can_form_melds_recursive(counts: Counter) -> bool:
     """
-    递归拆手牌成刻子或顺子
+    【核心】递归回溯函数：
+    检查一个 Counter 中的牌是否能拆解成 N 个面子 (刻子或顺子)。
+    这修复了你原先的“贪婪”Bug。
     """
-    if not tiles:
+    # Base Case: 没有任何牌了，说明成功拆分
+    if not counts:
         return True
-    tiles.sort()
-    counts = Counter(tiles)
-    first = tiles[0]
 
-    # 尝试刻子
-    if counts[first] >= 3:
-        remaining = tiles.copy()
-        for _ in range(3):
-            remaining.remove(first)
-        if can_form_melds_recursive(remaining):
+    # 找出手上最小的一张牌开始尝试 (保证不重复、不遗漏)
+    first_tile = sorted(counts.keys())[0]
+
+    # --- 尝试 1：用这张牌组“刻子” (Pong) ---
+    if counts[first_tile] >= 3:
+        new_counts = counts.copy()
+        new_counts[first_tile] -= 3
+        if new_counts[first_tile] == 0:
+            del new_counts[first_tile]
+        
+        # 递归检查剩下的牌
+        if can_form_melds_recursive(new_counts):
             return True
+        # 如果递归失败 (False)，没关系，我们会继续尝试下面的“顺子”
 
-    # 尝试顺子（只针对万/筒/条）
-    suit = first[-1]
-    if suit in 'mps':
-        try:
-            n1 = str(int(first[0]) + 1) + suit
-            n2 = str(int(first[0]) + 2) + suit
-            if n1 in counts and n2 in counts:
-                remaining = tiles.copy()
-                remaining.remove(first)
-                remaining.remove(n1)
-                remaining.remove(n2)
-                if can_form_melds_recursive(remaining):
+    # --- 尝试 2：用这张牌组“顺子” (Chow) ---
+    suit = first_tile[0]
+    num_str = first_tile[1:]
+    
+    if suit in 'BCD' and num_str.isdigit():
+        num = int(num_str)
+        if num <= 7: # 只有 1-7 可以作为顺子的开头
+            n1 = f"{suit}{num + 1}"
+            n2 = f"{suit}{num + 2}"
+            
+            # 检查是否有 n+1 和 n+2
+            if counts[n1] > 0 and counts[n2] > 0:
+                new_counts = counts.copy()
+                new_counts[first_tile] -= 1
+                new_counts[n1] -= 1
+                new_counts[n2] -= 1
+                
+                # 清理0计数的牌
+                new_counts = Counter({k: v for k, v in new_counts.items() if v > 0})
+                
+                # 递归检查剩下的牌
+                if can_form_melds_recursive(new_counts):
                     return True
-        except:
-            pass
 
+    # --- 失败 ---
+    # 如果用 first_tile 组刻子和组顺子都无法让剩下的牌胡牌，
+    # 说明这个分支是死路，返回 False。
     return False
 
 # 返回可胡的牌
@@ -383,8 +417,8 @@ def winning_tiles_for(hand13: List[str], exposed_melds: List[Dict] = None, all_t
     """
     if all_tiles is None:
         all_tiles = [
-            f'{i}{suit}' for suit in 'mps' for i in range(1, 10)
-        ] + ['east', 'south', 'west', 'north', 'red', 'green', 'white']
+            f'{suit}{i}' for suit in 'BCD' for i in range(1, 10)
+        ] + WINDS
 
     wins = []
     for tile in all_tiles:
@@ -993,6 +1027,7 @@ class GameState:
         # canTing indicator and list of discardable tiles to enter Ting
         can_ting = False
         ting_discardables: List[str] = []
+        print(self.started and self.player_order and self.player_order[self.turn_index] is recipient and self.expects_discard and not self.ting_flags.get(recipient, False))
         if self.started and self.player_order and self.player_order[self.turn_index] is recipient and self.expects_discard and not self.ting_flags.get(recipient, False):
             hand = list(self.hands.get(recipient, []))
             exposed = list(self.exposed_melds.get(recipient, []))

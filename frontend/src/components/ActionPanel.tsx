@@ -1,6 +1,7 @@
 import React from 'react'
 
 export default function ActionPanel({ game, client, joined, isYourTurn, you, tingPending, tingDiscardables, state, nowTs }: any) {
+  console.log({ isYourTurn, ting: you?.ting, canTing: game?.canTing, tingPending });
   return (
     <div className="space-y-2">
       {game?.started && (

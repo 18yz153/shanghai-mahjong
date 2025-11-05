@@ -15,7 +15,7 @@ function DiscardGrid({ tiles, vertical = false, maxTiles = 24, gridWidth }: { ti
         gridTemplateRows: `repeat(4, 1fr)`,
         gap: `${gap}px`,
         width: gridWidth,
-        height: gridHeight
+        height: gridHeight,
       }}
     >
       {tiles.length > 0 ? (
@@ -33,7 +33,6 @@ function DiscardGrid({ tiles, vertical = false, maxTiles = 24, gridWidth }: { ti
 
 export default function DiscardPile({ game }: { game: any }) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
-
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
@@ -41,80 +40,101 @@ export default function DiscardPile({ game }: { game: any }) {
   }, [])
 
   const rows = game?.discardsByPlayer ?? []
+  const gridWidth = Math.min(Math.max(windowWidth * 0.18, 140), 220)
+  const diceSize = Math.min(Math.max(windowWidth * 0.08, 50), 100) 
 
   const getTiles = (idx: number) => {
     const row = rows[idx]
     const playerFromGame = game?.players?.[idx]
     if (!row) return { name: '(空)', tiles: [], turn: false }
 
-    const player = row
-    const score = player.score ?? 0
+    const score = row.score ?? 0
     const scoreStr = score > 0 ? `(+${score})` : score < 0 ? `(${score})` : `(0)`
     const color = score > 0 ? 'text-emerald-400' : score < 0 ? 'text-rose-400' : 'text-slate-300'
 
     return {
-      name: <span className={`text-xs font-medium ${color}`}>{player.name} {scoreStr}</span>,
+      name: <span className={`text-xs font-medium ${color}`}>{row.name} {scoreStr}</span>,
       tiles: row.tiles ?? [],
-      turn: playerFromGame?.turn ?? false
+      turn: playerFromGame?.turn ?? false,
     }
   }
 
-  const bottom = getTiles(0)
-  const left = getTiles(1)
-  const top = getTiles(2)
-  const right = getTiles(3)
-
   const LightBar = ({ active }: { active: boolean }) => (
-    <div className={`h-1.5 w-16 rounded-full my-1 transition-all duration-300 ${active ? 'bg-amber-400 shadow-[0_0_10px_3px_rgba(251,191,36,0.6)] animate-pulse' : 'bg-slate-700'}`} />
+    <div
+      className={`h-1.5 w-16 rounded-full my-1 transition-all duration-300 ${
+        active
+          ? 'bg-amber-400 shadow-[0_0_10px_3px_rgba(251,191,36,0.6)] animate-pulse'
+          : 'bg-slate-700'
+      }`}
+    />
   )
 
-  // 根据窗口宽度动态设置 grid 尺寸
-  const gridWidth = Math.min(Math.max(windowWidth * 0.18, 140), 220)
+  // 顺时针排列玩家
+  const playerViews = [
+    { ...getTiles(0), pos: 'bottom', rot: 0 },   // 自己
+    { ...getTiles(1), pos: 'right', rot: 90 },  // 右家
+    { ...getTiles(2), pos: 'top', rot: 180 },    // 对家
+    { ...getTiles(3), pos: 'left', rot: 270 },    // 左家
+  ]
+
+  const getPositionStyle = (pos: string) => {
+    switch (pos) {
+      case 'bottom':
+        return { top: 0+65, left: '50%', transform: 'translateX(-50%)' }
+      case 'top':
+        return { bottom: 0+65, left: '50%', transform: 'translateX(-50%) rotate(180deg)' }
+      case 'left':
+        return { top: '50%', left: 0+60, transform: 'translateY(-50%) rotate(270deg)' }
+      case 'right':
+        return { top: '50%', right: 0+60, transform: 'translateY(-50%) rotate(90deg)' }
+      default:
+        return {}
+    }
+  }
 
   return (
-    <div className="flex-1 px-4">
-      <div className="grid grid-cols-3 grid-rows-3 gap-2 items-center justify-center">
-        {/* top center */}
-        <div className="col-start-2 row-start-1 flex flex-col items-center">
-          <div className="mb-1">{top.name}</div>
-          <LightBar active={top.turn} />
-          <DiscardGrid tiles={top.tiles} vertical={false} gridWidth={gridWidth} />
+    <div className="relative w-full h-full">
+      {/* 四个方向的弃牌区 */}
+      {playerViews.map((p, i) => (
+        <div
+          key={i}
+          className="absolute flex justify-center items-center"
+          style={{
+            width: gridWidth,
+            ...getPositionStyle(p.pos),
+          }}
+        >
+          <div className="flex flex-col items-center">
+            <div className="mb-1">{p.name}</div>
+            <LightBar active={p.turn} />
+            <DiscardGrid tiles={p.tiles} vertical={false} gridWidth={gridWidth} />
+          </div>
         </div>
+      ))}
 
-        {/* left center */}
-        <div className="col-start-1 row-start-2 flex flex-col items-center">
-          <div className="mb-1">{left.name}</div>
-          <LightBar active={left.turn} />
-          <DiscardGrid tiles={left.tiles} vertical gridWidth={gridWidth} />
-        </div>
-
-        {/* center (骰子区) */}
-        <div className="col-start-2 row-start-2 flex flex-col items-center justify-center p-1">
-          {(game?.diceValues ?? []).length > 0 && (
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                {game.diceValues.map((v: number, i: number) => (
-                  <div key={i} className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center text-white">{v}</div>
-                ))}
-              </div>
-              <div className="text-amber-400 text-sm">当前局 {game?.scoreMultiplier ?? 1}倍</div>
+      {/* 中间骰子区 */}
+      <div
+        className="absolute flex flex-col items-center justify-center"
+        style={{
+          top: '50%',
+          left: '50%',
+          width: diceSize,
+          height: diceSize,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        {(game?.diceValues ?? []).length > 0 && (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              {game.diceValues.map((v: number, i: number) => (
+                <div key={i} className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center text-white">
+                  {v}
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-
-        {/* right center */}
-        <div className="col-start-3 row-start-2 flex flex-col items-center">
-          <div className="mb-1">{right.name}</div>
-          <LightBar active={right.turn} />
-          <DiscardGrid tiles={right.tiles} vertical gridWidth={gridWidth} />
-        </div>
-
-        {/* bottom center */}
-        <div className="col-start-2 row-start-3 flex flex-col items-center">
-          <div className="mb-1">{bottom.name}</div>
-          <LightBar active={bottom.turn} />
-          <DiscardGrid tiles={bottom.tiles} vertical={false} gridWidth={gridWidth} />
-        </div>
+            <div className="text-amber-400 text-sm">当前局 {game?.scoreMultiplier ?? 1}倍</div>
+          </div>
+        )}
       </div>
     </div>
   )

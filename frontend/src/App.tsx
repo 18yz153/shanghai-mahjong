@@ -80,19 +80,19 @@ export default function App() {
       <div style={{ width: deskWidth, height: boardHeight }} className="relative">
         {/* 上家 */}
         {game?.players?.[2] && (
-          <div style={{ position: 'absolute', left: 3/2*centerX, top: seatOffset, transform: 'translate(-50%, 0)' }}>
+          <div style={{ position: 'absolute', left: 3/2*centerX, top: seatOffset, transform: 'translate(-50%, 0) rotate(180deg)' }}>
             <Seat player={game.players[2]} position="top" />
           </div>
         )}
         {/* 左家 */}
         {game?.players?.[1] && (
-          <div style={{ position: 'absolute', left: seatOffset, top: centerY, transform: 'translate(0, -50%)' }}>
+          <div style={{ position: 'absolute', left: seatOffset, top: centerY, transform: 'translate(0, -50%) rotate(90deg)' }}>
             <Seat player={game.players[1]} position="left" />
           </div>
         )}
         {/* 右家 */}
         {game?.players?.[3] && (
-          <div style={{ position: 'absolute', right: seatOffset, top: centerY, transform: 'translate(0, -50%)' }}>
+          <div style={{ position: 'absolute', right: seatOffset, top: centerY, transform: 'translate(0, -50%) rotate(270deg)' }}>
             <Seat player={game.players[3]} position="right" />
           </div>
         )}

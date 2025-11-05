@@ -3,31 +3,35 @@ import { formatTileZh, tileToSvg } from '../i18n'
 
 export function Tile({
   tile,
-  vertical = true,
+  rotate = 0,
   className = '',
   style,
 }: {
   tile: string
-  vertical?: boolean
+  rotate?: number // 旋转角度
   className?: string
   style?: React.CSSProperties
 }) {
   const src = tileToSvg(tile)
 
-  if (!vertical || !src) {
-    // 横版或找不到图片 fallback 文字
+  const transformStyle = {
+    transform: `rotate(${rotate}deg)`,
+    transformOrigin: 'center',
+  }
+
+  if (!src) {
+    // fallback 文字
     const text = formatTileZh(tile)
     return (
       <div
-        style={style}
         className={`px-1 py-0.5 rounded bg-slate-700 border border-slate-600 text-xs text-slate-100 text-center ${className}`}
+        style={{ ...style, ...transformStyle }}
       >
         {text}
       </div>
     )
   }
 
-  // 竖版显示 SVG
   return (
     <img
       src={src}
@@ -38,6 +42,7 @@ export function Tile({
         height: 60,
         objectFit: 'contain',
         ...style,
+        ...transformStyle,
       }}
     />
   )
@@ -75,7 +80,7 @@ export function Seat({
   const bonusTileClass = 'rounded border'
 
   // 布局方向
-  const isVertical = position === 'left' || position === 'right'
+  const isVertical = false
 
   return (
     <div

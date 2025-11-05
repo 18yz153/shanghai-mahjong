@@ -20,7 +20,7 @@ function DiscardGrid({ tiles, vertical = false, maxTiles = 24, gridWidth }: { ti
     >
       {tiles.length > 0 ? (
         tiles.slice(0, maxTiles).map((t, i) => (
-          <Tile key={i} tile={t} vertical={vertical} className="w-full h-full" style={{ fontSize }} />
+          <Tile key={i} tile={t} className="w-full h-full" style={{ fontSize }} />
         ))
       ) : (
         <div className="col-span-6 row-span-4 flex items-center justify-center text-slate-500 italic" style={{ fontSize }}>
@@ -107,7 +107,7 @@ export default function DiscardPile({ game }: { game: any }) {
           <div className="flex flex-col items-center">
             <div className="mb-1">{p.name}</div>
             <LightBar active={p.turn} />
-            <DiscardGrid tiles={p.tiles} vertical={false} gridWidth={gridWidth} />
+            <DiscardGrid tiles={p.tiles} gridWidth={gridWidth} />
           </div>
         </div>
       ))}

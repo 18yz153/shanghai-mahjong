@@ -120,7 +120,6 @@ export function Seat({
                       tile={t}
                       className={`${meldTileClass} ${j === 1 ? 'bg-amber-700' : ''}`}
                       style={{ width: tileWidth, height: tileHeight, fontSize: tileFontSize }}
-                      vertical={isVertical}
                     />
                   ))
                 : Array(meld.type === 'kong' ? 4 : 3)
@@ -131,7 +130,6 @@ export function Seat({
                         tile={meld.tile}
                         className={`${meldTileClass} ${idx === 0 ? 'bg-amber-700' : ''}`}
                         style={{ width: tileWidth, height: tileHeight, fontSize: tileFontSize }}
-                        vertical={isVertical}
                       />
                     ))}
             </div>
@@ -150,7 +148,6 @@ export function Seat({
               tile={t}
               className={`${bonusTileClass} bg-emerald-800/30 border-emerald-600/30`}
               style={{ width: tileWidth, height: tileHeight, fontSize: tileFontSize }}
-              vertical={isVertical}
             />
           ))}
         </div>
